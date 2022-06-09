@@ -3,8 +3,8 @@
 import logging
 import time
 
-from CosmoTech_Libraries.Modelops.core.io.model_writer import ModelWriter
-from CosmoTech_Libraries.Modelops.core.utils.model_util import ModelUtil
+from CosmoTech_Acceleration_Library.Modelops.core.io.model_writer import ModelWriter
+from CosmoTech_Acceleration_Library.Modelops.core.utils.model_util import ModelUtil
 from azure.digitaltwins.core import DigitalTwinsClient
 from azure.identity import DefaultAzureCredential
 
