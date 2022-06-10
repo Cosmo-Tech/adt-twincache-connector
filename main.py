@@ -45,7 +45,7 @@ if __name__ == "__main__":
             ADTTwinCacheConnector(adt_source_url=adt_source_url, twin_cache_host=twin_cache_host,
                                   twin_cache_port=twin_cache_port, twin_cache_name=twin_cache_name).run()
         else:
-            logger.debug("Cache rotation defined and set to %s",twin_cache_rotation)
+            logger.debug("Cache rotation defined and set to %s", twin_cache_rotation)
             ADTTwinCacheConnector(adt_source_url=adt_source_url, twin_cache_host=twin_cache_host,
                                   twin_cache_port=twin_cache_port, twin_cache_name=twin_cache_name,
                                   twin_cache_rotation=int(twin_cache_rotation)).run()
