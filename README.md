@@ -4,6 +4,16 @@ The aim of this project is to read data from an ADT and store data into Cosmo Te
 
 ## Changelog
 
+### Version 0.0.2
+
+#### Features
+
+- Handle password for default account
+
+#### Chore
+
+- Upgrade CosmoTech_Acceleration_Library version to 0.1.3
+
 ### Version 0.0.1
 
 #### Features
@@ -25,6 +35,7 @@ Here is the list of environment variables:
 - **TWIN_CACHE_PORT**: the twin cache port
 - **TWIN_CACHE_NAME**: the twin cache key name where data will be stored
 - **TWIN_CACHE_ROTATION**: defined the data rotation (a.k.a. the amount of keys to keep until data is overwritten) (default 1)
+- **TWIN_CACHE_PASSWORD**: default account/user password (default None)
 
 ## Log level
 
@@ -58,6 +69,7 @@ export AZURE_DIGITAL_TWINS_URL=https://<your_adt_instance>.digitaltwins.azure.ne
 export TWIN_CACHE_HOST=<twin_cache_host>
 export TWIN_CACHE_NAME=<twin_cache_name>
 export TWIN_CACHE_PORT=<twin_cache_port>
+export TWIN_CACHE_PASSWORD=<twin_cache_password>
 ```
 
 Then run:
@@ -71,4 +83,5 @@ Then run:
 
 ## Tasks :
 
-- [ ]  Handle username/password for secured twin cache connection
+- [X]  Handle password for default connection on secured twin cache
+- [ ]  Handle username/password for any secured twin cache connection

@@ -12,6 +12,7 @@ docker run \
 -e TWIN_CACHE_HOST="$(printenv TWIN_CACHE_HOST)" \
 -e TWIN_CACHE_NAME="$(printenv TWIN_CACHE_NAME)" \
 -e TWIN_CACHE_PORT="$(printenv TWIN_CACHE_PORT)" \
+-e TWIN_CACHE_PASSWORD="$(printenv TWIN_CACHE_PASSWORD)" \
 -e TWIN_CACHE_ROTATION="1" \
 -e LOG_LEVEL="INFO" \
 adt-twincache-connector

@@ -39,15 +39,18 @@ if __name__ == "__main__":
         twin_cache_port = os.getenv("TWIN_CACHE_PORT")
         twin_cache_name = os.getenv("TWIN_CACHE_NAME")
         twin_cache_rotation = os.getenv("TWIN_CACHE_ROTATION")
+        twin_cache_password = os.getenv("TWIN_CACHE_PASSWORD")
 
         if twin_cache_rotation is None:
             logger.debug("No cache rotation defined, default to 1")
             ADTTwinCacheConnector(adt_source_url=adt_source_url, twin_cache_host=twin_cache_host,
-                                  twin_cache_port=twin_cache_port, twin_cache_name=twin_cache_name).run()
+                                  twin_cache_port=twin_cache_port, twin_cache_name=twin_cache_name,
+                                  twin_cache_password=twin_cache_password).run()
         else:
             logger.debug("Cache rotation defined and set to %s", twin_cache_rotation)
             ADTTwinCacheConnector(adt_source_url=adt_source_url, twin_cache_host=twin_cache_host,
                                   twin_cache_port=twin_cache_port, twin_cache_name=twin_cache_name,
-                                  twin_cache_rotation=int(twin_cache_rotation)).run()
+                                  twin_cache_rotation=int(twin_cache_rotation),
+                                  twin_cache_password=twin_cache_password).run()
     else:
         raise Exception(f"Missing environment variables named {missing_env_vars}")
