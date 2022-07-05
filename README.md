@@ -4,6 +4,12 @@ The aim of this project is to read data from an ADT and store data into Cosmo Te
 
 ## Changelog
 
+### Version 0.0.3
+
+#### Fix
+
+- Add ADT url in key metadata 
+
 ### Version 0.0.2
 
 #### Features

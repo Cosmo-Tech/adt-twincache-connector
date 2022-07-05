@@ -94,8 +94,9 @@ class ADTTwinCacheConnector:
     Connector class to fetch data from ADT and store them into a twin cache
     """
 
-    def __init__(self, adt_source_url: str, twin_cache_host: str, twin_cache_port: int,
-                 twin_cache_name: str, twin_cache_password: str = None, twin_cache_rotation: int = 1):
+    def __init__(self, twin_cache_host: str, twin_cache_port: int,
+                 twin_cache_name: str, twin_cache_password: str = None, adt_source_url: str = "",
+                 twin_cache_rotation: int = 1):
         self.credentials = DefaultAzureCredential()
         self.adt_source_url = adt_source_url
         self.twin_cache_host = twin_cache_host
@@ -103,7 +104,9 @@ class ADTTwinCacheConnector:
         self.twin_cache_name = twin_cache_name
         self.twin_cache_rotation = twin_cache_rotation
         self.mw = ModelWriter(host=twin_cache_host, port=twin_cache_port,
-                              name=twin_cache_name, graph_rotation=twin_cache_rotation, password=twin_cache_password)
+                              name=twin_cache_name,
+                              source_url=adt_source_url, graph_rotation=twin_cache_rotation,
+                              password=twin_cache_password)
 
     def get_data(self) -> tuple:
         """
