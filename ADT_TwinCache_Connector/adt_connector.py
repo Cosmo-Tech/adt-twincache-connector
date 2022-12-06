@@ -2,8 +2,12 @@
 # Licensed under the MIT license.
 import logging
 import time
+import csv
+import os
+import json
 
 from CosmoTech_Acceleration_Library.Modelops.core.io.model_writer import ModelWriter
+from CosmoTech_Acceleration_Library.Modelops.core.io.model_importer import ModelImporter
 from CosmoTech_Acceleration_Library.Modelops.core.utils.model_util import ModelUtil
 from azure.digitaltwins.core import DigitalTwinsClient
 from azure.identity import DefaultAzureCredential
@@ -39,7 +43,7 @@ def get_rels(client: DigitalTwinsClient) -> dict:
     return rels_content
 
 
-def get_twins(client: DigitalTwinsClient) -> dict:
+def get_twins(client: DigitalTwinsClient) -> dict[str, list[dict]]:
     """
     Get all twins from ADT
     :param client: a DigitalTwinsClient
@@ -103,10 +107,16 @@ class ADTTwinCacheConnector:
         self.twin_cache_port = twin_cache_port
         self.twin_cache_name = twin_cache_name
         self.twin_cache_rotation = twin_cache_rotation
+        print(self.__dict__)
+        print(twin_cache_password)
         self.mw = ModelWriter(host=twin_cache_host, port=twin_cache_port,
                               name=twin_cache_name,
                               source_url=adt_source_url, graph_rotation=twin_cache_rotation,
                               password=twin_cache_password)
+        self.mi = ModelImporter(host=twin_cache_host, port=twin_cache_port,
+                                name=twin_cache_name,
+                                source_url=adt_source_url, graph_rotation=twin_cache_rotation,
+                                password=twin_cache_password)
 
     def get_data(self) -> tuple:
         """
@@ -152,6 +162,13 @@ class ADTTwinCacheConnector:
         logger.debug(f"Create Rels took : {create_rels_timing} s")
         logger.debug(f"Create all data took : {store_data_timing} s")
 
+    def _unjsonify(self, row):
+        for k, v in row.items():
+            if '{' in str(v):
+                row[k] = json.dumps(v)
+                logger.debug(row)
+        return row
+
     def run(self):
         """
         Run connector logic (fetch, transform and store)
@@ -159,7 +176,34 @@ class ADTTwinCacheConnector:
         logger.info("Run start...")
         run_start = time.time()
         source_data = self.get_data()
-        prepared_data = transform_data(source_data)
-        self.store_data(prepared_data)
+        # go bulk
+        twin_data = source_data[0]
+        rel_data = source_data[1]
+
+        file_paths = {'twins': [], 'rels': []}
+        for folder_name, data in [('twins', twin_data), ('rels', rel_data)]:
+            for f_name, rows in data.items():
+                file_path = f'./{folder_name}/{f_name}.csv'
+                file_paths[folder_name].append(file_path)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, 'w+') as f:
+                    fieldnames = list({k for r in rows for k in r})
+                    if folder_name == 'twins':
+                        fieldnames.insert(0, fieldnames.pop(fieldnames.index('dt_id')))
+                    elif folder_name == 'rels':
+                        fieldnames.insert(0, fieldnames.pop(fieldnames.index('src')))
+                        fieldnames.insert(1, fieldnames.pop(fieldnames.index('dest')))
+                    logger.debug(f'fieldnames: {fieldnames}')
+
+                    logger.info(f'create new file {file_path}')
+                    csv_w = csv.DictWriter(f, fieldnames=fieldnames)
+                    csv_w.writeheader()
+                    for r in rows:
+                        csv_w.writerow(self._unjsonify(r))
+
+        self.mi.bulk_import(twin_file_paths=file_paths['twins'], relationship_file_paths=file_paths['rels'])
+        # prepared_data = transform_data(source_data)
+        # self.store_data(prepared_data)
+
         run_timing = time.time() - run_start
         logger.info(f"Run took : {run_timing} s")
