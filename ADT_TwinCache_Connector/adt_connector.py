@@ -56,7 +56,7 @@ def get_twins(client: DigitalTwinsClient) -> dict[str, list[dict]]:
     for twin in query_result:
         entity_type = twin.get('$metadata').get('$model').split(':')[-1].split(';')[0]
         t_content = {k: v for k, v in twin.items()}
-        t_content['dt_id'] = t_content['$dtId']
+        t_content['id'] = t_content['$dtId']
         for k in twin.keys():
             if k[0] == '$':
                 del t_content[k]
@@ -189,7 +189,7 @@ class ADTTwinCacheConnector:
                 with open(file_path, 'w+') as f:
                     fieldnames = list({k for r in rows for k in r})
                     if folder_name == 'twins':
-                        fieldnames.insert(0, fieldnames.pop(fieldnames.index('dt_id')))
+                        fieldnames.insert(0, fieldnames.pop(fieldnames.index('id')))
                     elif folder_name == 'rels':
                         fieldnames.insert(0, fieldnames.pop(fieldnames.index('src')))
                         fieldnames.insert(1, fieldnames.pop(fieldnames.index('dest')))
