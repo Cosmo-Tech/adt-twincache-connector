@@ -162,13 +162,6 @@ class ADTTwinCacheConnector:
         logger.debug(f"Create Rels took : {create_rels_timing} s")
         logger.debug(f"Create all data took : {store_data_timing} s")
 
-    def _unjsonify(self, row):
-        for k, v in row.items():
-            if '{' in str(v):
-                row[k] = json.dumps(v)
-                logger.debug(row)
-        return row
-
     def run(self):
         """
         Run connector logic (fetch, transform and store)
@@ -199,7 +192,7 @@ class ADTTwinCacheConnector:
                     csv_w = csv.DictWriter(f, fieldnames=fieldnames)
                     csv_w.writeheader()
                     for r in rows:
-                        csv_w.writerow(self._unjsonify(r))
+                        csv_w.writerow(ModelUtil.unjsonify(r))
 
         self.mi.bulk_import(twin_file_paths=file_paths['twins'], relationship_file_paths=file_paths['rels'])
         # prepared_data = transform_data(source_data)
