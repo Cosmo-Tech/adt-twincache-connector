@@ -107,16 +107,7 @@ class ADTTwinCacheConnector:
         self.twin_cache_port = twin_cache_port
         self.twin_cache_name = twin_cache_name
         self.twin_cache_rotation = twin_cache_rotation
-        print(self.__dict__)
-        print(twin_cache_password)
-        self.mw = ModelWriter(host=twin_cache_host, port=twin_cache_port,
-                              name=twin_cache_name,
-                              source_url=adt_source_url, graph_rotation=twin_cache_rotation,
-                              password=twin_cache_password)
-        self.mi = ModelImporter(host=twin_cache_host, port=twin_cache_port,
-                                name=twin_cache_name,
-                                source_url=adt_source_url, graph_rotation=twin_cache_rotation,
-                                password=twin_cache_password)
+        self.twin_cache_password = twin_cache_password
 
     def get_data(self) -> tuple:
         """
@@ -145,17 +136,21 @@ class ADTTwinCacheConnector:
         :param data: tuple(twins:dict, rels: dict)
         """
         logger.debug("Start storing data...")
+        mw = ModelWriter(host=self.twin_cache_host, port=self.twin_cache_port,
+                         name=self.twin_cache_name,
+                         source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
+                         password=self.twin_cache_password)
         twin_queries = data[0]
         rel_queries = data[1]
         store_data_start = time.time()
         create_twins_start = time.time()
         for twin_query in twin_queries:
-            self.mw.graph.query(twin_query, read_only=False)
+            mw.graph.query(twin_query, read_only=False)
 
         create_twins_timing = time.time() - create_twins_start
         create_rels_start = time.time()
         for rel_query in rel_queries:
-            self.mw.graph.query(rel_query, read_only=False)
+            mw.graph.query(rel_query, read_only=False)
         create_rels_timing = time.time() - create_rels_start
         store_data_timing = time.time() - store_data_start
         logger.debug(f"Create Twins took : {create_twins_timing} s")
@@ -193,8 +188,11 @@ class ADTTwinCacheConnector:
                     csv_w.writeheader()
                     for r in rows:
                         csv_w.writerow(ModelUtil.unjsonify(r))
-
-        self.mi.bulk_import(twin_file_paths=file_paths['twins'], relationship_file_paths=file_paths['rels'])
+        mi = ModelImporter(host=self.twin_cache_host, port=self.twin_cache_port,
+                           name=self.twin_cache_name,
+                           source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
+                           password=self.twin_cache_password)
+        mi.bulk_import(twin_file_paths=file_paths['twins'], relationship_file_paths=file_paths['rels'])
         # prepared_data = transform_data(source_data)
         # self.store_data(prepared_data)
 
