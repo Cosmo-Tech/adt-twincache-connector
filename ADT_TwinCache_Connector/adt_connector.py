@@ -157,6 +157,33 @@ class ADTTwinCacheConnector:
         logger.debug(f"Create Rels took : {create_rels_timing} s")
         logger.debug(f"Create all data took : {store_data_timing} s")
 
+    def get_adt_to_redis_schemas(self):
+        client = DigitalTwinsClient(self.adt_source_url, self.credentials)
+        result_set = client.list_models(include_model_definition=True)
+
+        redis_schemas = {"integer": "INTEGER",
+                         "double": "DOUBLE",
+                         "boolean": "BOOLEAN",
+                         "string": "STRING",
+                         "array": "ARRAY",
+                         "dateTime": "STRING",
+                         "duration": "STRING",
+                         "Object": "STRING",
+                         "Map": "STRING",
+                         "Enum": "STRING",
+                         "Array": "STRING"}
+
+        models = [r.model for r in result_set]
+        dict_dict = {}
+        for m in models:
+            contents = m["contents"]
+            dict_mod = {}
+            for attribute in contents:
+                if attribute["@type"] == "Property":
+                    dict_mod[attribute["name"]] = redis_schemas[attribute["schema"]]
+            dict_dict[m["@id"]] = dict_mod
+        return dict_dict
+
     def run(self):
         """
         Run connector logic (fetch, transform and store)
@@ -164,6 +191,7 @@ class ADTTwinCacheConnector:
         logger.info("Run start...")
         run_start = time.time()
         source_data = self.get_data()
+        models = self.get_adt_to_redis_schemas()
         # go bulk
         twin_data = source_data[0]
         rel_data = source_data[1]
