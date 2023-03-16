@@ -163,11 +163,15 @@ class ADTTwinCacheConnector:
 
         redis_schemas = {"integer": "INTEGER",
                          "double": "DOUBLE",
+                         "float": "FLOAT",
+                         "long": "LONG",
                          "boolean": "BOOLEAN",
                          "string": "STRING",
                          "array": "ARRAY",
+                         "date": "STRING",
                          "dateTime": "STRING",
                          "duration": "STRING",
+                         "time": "STRING",
                          "Object": "STRING",
                          "Map": "STRING",
                          "Enum": "STRING",
@@ -180,8 +184,13 @@ class ADTTwinCacheConnector:
             dict_mod = {}
             for attribute in contents:
                 if attribute["@type"] == "Property":
-                    dict_mod[attribute["name"]] = redis_schemas[attribute["schema"]]
-            dict_dict[m["@id"]] = dict_mod
+                    try:
+                        dict_mod[attribute["name"]] = redis_schemas[attribute["schema"]]
+                    except TypeError as e:
+                        # schema is a complexe type
+                        dict_mod[attribute["name"]] = redis_schemas[attribute["schema"]['@type']]
+            trimed_id = m["@id"].split(':')[-1].split(';')[0]
+            dict_dict[trimed_id] = dict_mod
         return dict_dict
 
     def run(self):
@@ -192,35 +201,58 @@ class ADTTwinCacheConnector:
         run_start = time.time()
         source_data = self.get_data()
         models = self.get_adt_to_redis_schemas()
+
         # go bulk
         twin_data = source_data[0]
         rel_data = source_data[1]
 
-        file_paths = {'twins': [], 'rels': []}
-        for folder_name, data in [('twins', twin_data), ('rels', rel_data)]:
-            for f_name, rows in data.items():
-                file_path = f'./{folder_name}/{f_name}.csv'
-                file_paths[folder_name].append(file_path)
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                with open(file_path, 'w+') as f:
-                    fieldnames = list({k for r in rows for k in r})
-                    if folder_name == 'twins':
-                        fieldnames.insert(0, fieldnames.pop(fieldnames.index('id')))
-                    elif folder_name == 'rels':
-                        fieldnames.insert(0, fieldnames.pop(fieldnames.index('src')))
-                        fieldnames.insert(1, fieldnames.pop(fieldnames.index('dest')))
-                    logger.debug(f'fieldnames: {fieldnames}')
+        # create twins files
+        twins_files_paths = []
+        twins_folder_path = './twins'
+        os.makedirs(os.path.dirname(twins_folder_path), exist_ok=True)
+        for twin_type, rows in twin_data.items():
+            file_path = f'{twins_folder_path}/{twin_type}.csv'
+            with open(file_path, 'w+') as f:
+                fieldnames = list({k for r in rows for k in r})
+                fieldnames.insert(0, fieldnames.pop(fieldnames.index('id')))
 
-                    logger.info(f'create new file {file_path}')
-                    csv_w = csv.DictWriter(f, fieldnames=fieldnames)
-                    csv_w.writeheader()
-                    for r in rows:
-                        csv_w.writerow(ModelUtil.unjsonify(r))
+                schemas = models[twin_type]
+                enforced_schema_fieldnames = [f'{header}:{schemas[header]}' if header in schemas else header for header in fieldnames]
+                logger.debug(f'fieldnames: {enforced_schema_fieldnames}')
+
+                logger.info(f'create new file {file_path}')
+                # write header with enforced schema
+                csv_w = csv.DictWriter(f, fieldnames=enforced_schema_fieldnames)
+                csv_w.writeheader()
+
+                csv_w = csv.DictWriter(f, fieldnames=fieldnames)
+                for r in rows:
+                    csv_w.writerow(ModelUtil.unjsonify(r))
+            twins_files_paths.append(file_path)
+
+        # Create rels files
+        rels_files_paths = []
+        rels_folder_path = './rels'
+        os.makedirs(os.path.dirname(rels_folder_path), exist_ok=True)
+        for rel_type, rows in rel_data.items():
+            file_path = f'{rels_folder_path}/{rel_type}.csv'
+            with open(file_path, 'w+') as f:
+                fieldnames = list({k for r in rows for k in r})
+                fieldnames.insert(0, fieldnames.pop(fieldnames.index('src')))
+                fieldnames.insert(1, fieldnames.pop(fieldnames.index('dest')))
+
+                logger.info(f'create new file {file_path}')
+                csv_w = csv.DictWriter(f, fieldnames=fieldnames)
+                csv_w.writeheader()
+                for r in rows:
+                    csv_w.writerow(ModelUtil.unjsonify(r))
+            rels_files_paths.append(file_path)
+
         mi = ModelImporter(host=self.twin_cache_host, port=self.twin_cache_port,
                            name=self.twin_cache_name,
                            source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
                            password=self.twin_cache_password)
-        mi.bulk_import(twin_file_paths=file_paths['twins'], relationship_file_paths=file_paths['rels'])
+        mi.bulk_import(twin_file_paths=twins_files_paths, relationship_file_paths=rels_files_paths, enforce_schema=True)
         # prepared_data = transform_data(source_data)
         # self.store_data(prepared_data)
 
