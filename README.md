@@ -4,6 +4,42 @@ The aim of this project is to read data from an ADT and store data into Cosmo Te
 
 ## Changelog
 
+### Version 0.1.O
+
+#### Featrues
+- Enforce redis schema on bulk import from ADT DTDL
+
+### Version 0.0.7
+
+#### Fix
+- ModelWriter instanciate outside of the constructor
+
+#### Chore
+- Clean up utilization of CosmoTech_Acceleration_Library
+
+### Version 0.0.6
+
+#### Features
+- externalise json to string interpretation to CosmoTech_Acceleration_Library
+
+#### Chore
+- Upgrade CosmoTech_Acceleration_Library version to 0.2.5
+- Upgrade azure-identity version to 1.12.0
+
+### Version 0.0.5
+
+#### Features
+- replace classique store with Redis Bulk import
+- change default twins identifier from **dt_id** to **id**
+
+#### Chore
+- Upgrade CosmoTech_Acceleration_Library version to 0.2.3
+
+### Version 0.0.4
+
+#### Chore
+- Upgrade CosmoTech_Acceleration_Library version to 0.2.1
+
 ### Version 0.0.3
 
 #### Fix
