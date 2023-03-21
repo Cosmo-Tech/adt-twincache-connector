@@ -1,10 +1,11 @@
 # Azure Digital Twins -> Cosmo Tech Twin Cache connector
 
-The aim of this project is to read data from an ADT and store data into Cosmo Tech Twin Cache solution
+This project purpose is to create a docker image thato read data from an ADT and store data into Cosmo Tech Twin Cache solution which is a Redis graph.
+Data are extracted from ADT with DTDL and then imported through Redis Graph.Bulk import with type extrapoleted from DTDL.
 
 ## Changelog
 
-### Version 0.1.O
+### Version 0.1.0
 
 #### Featrues
 - Enforce redis schema on bulk import from ADT DTDL
