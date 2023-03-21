@@ -32,6 +32,7 @@ def get_rels(client: DigitalTwinsClient) -> dict:
             "$targetId": "dest"
         }
         r_content = {k: v for k, v in relation.items()}
+        print(f'query content {r_content}')
         for k, v in tr.items():
             r_content[v] = r_content[k]
         for k in relation.keys():
@@ -179,6 +180,7 @@ class ADTTwinCacheConnector:
 
         models = [r.model for r in result_set]
         dict_dict = {}
+        dict_extend = {}
         for m in models:
             contents = m["contents"]
             dict_mod = {}
@@ -189,8 +191,29 @@ class ADTTwinCacheConnector:
                     except TypeError as e:
                         # schema is a complexe type
                         dict_mod[attribute["name"]] = redis_schemas[attribute["schema"]['@type']]
+                elif attribute["@type"] == "Relationship":
+                    print(f'attribute: {attribute}')
+                    dict_rel_modl = {}
+                    if 'properties' in attribute:
+                        properties = attribute["properties"]
+                        for prop in properties:
+                            try:
+                                dict_rel_modl[prop["name"]] = redis_schemas[prop["schema"]]
+                            except TypeError as e:
+                                # schema is a complexe type
+                                dict_rel_modl[prop["name"]] = redis_schemas[prop["schema"]['@type']]
+                    dict_dict[attribute["name"]] = dict_rel_modl
+
             trimed_id = m["@id"].split(':')[-1].split(';')[0]
             dict_dict[trimed_id] = dict_mod
+            # add model extends
+            if 'extends' in m:
+                dict_extend[trimed_id] = [ext.split(':')[-1].split(';')[0] for ext in m['extends']]
+        # add extends models properties
+        for model_id, extends in dict_extend.items():
+            for extend in extends:
+                dict_dict[model_id].update(dict_dict[extend])
+
         return dict_dict
 
     def run(self):
@@ -201,6 +224,7 @@ class ADTTwinCacheConnector:
         run_start = time.time()
         source_data = self.get_data()
         models = self.get_adt_to_redis_schemas()
+        print(models)
 
         # go bulk
         twin_data = source_data[0]
@@ -217,7 +241,8 @@ class ADTTwinCacheConnector:
                 fieldnames.insert(0, fieldnames.pop(fieldnames.index('id')))
 
                 schemas = models[twin_type]
-                enforced_schema_fieldnames = [f'{header}:{schemas[header]}' if header in schemas else header for header in fieldnames]
+                schemas.update({"id": "ID"})
+                enforced_schema_fieldnames = [f'{header}:{schemas[header]}' for header in fieldnames]
                 logger.debug(f'fieldnames: {enforced_schema_fieldnames}')
 
                 logger.info(f'create new file {file_path}')
@@ -241,9 +266,18 @@ class ADTTwinCacheConnector:
                 fieldnames.insert(0, fieldnames.pop(fieldnames.index('src')))
                 fieldnames.insert(1, fieldnames.pop(fieldnames.index('dest')))
 
+                schemas = models[rel_type]
+                schemas.update({"id": "STRING"})
+                schemas.update({"src": "START_ID", "dest": "END_ID"})
+                enforced_schema_fieldnames = [f'{header}:{schemas[header]}' for header in fieldnames]
+                logger.debug(f'fieldnames: {enforced_schema_fieldnames}')
+
                 logger.info(f'create new file {file_path}')
-                csv_w = csv.DictWriter(f, fieldnames=fieldnames)
+                # write header with enforced schema
+                csv_w = csv.DictWriter(f, fieldnames=enforced_schema_fieldnames)
                 csv_w.writeheader()
+
+                csv_w = csv.DictWriter(f, fieldnames=fieldnames)
                 for r in rows:
                     csv_w.writerow(ModelUtil.unjsonify(r))
             rels_files_paths.append(file_path)
