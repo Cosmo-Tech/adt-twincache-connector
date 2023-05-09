@@ -1,2 +1,2 @@
-CosmoTech_Acceleration_Library==0.2.9
+CosmoTech_Acceleration_Library==0.2.10
 azure-identity==1.12.0

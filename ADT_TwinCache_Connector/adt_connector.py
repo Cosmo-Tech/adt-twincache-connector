@@ -67,33 +67,6 @@ def get_twins(client: DigitalTwinsClient) -> dict[str, list[dict]]:
     return twins_content
 
 
-def transform_data(data: tuple) -> dict:
-    """
-    Transform tuple data to tuple queries
-    :param data: twins and relationships information (tuple(twins:dict, rels: dict))
-    :return: a tuple containing queries (tuple(twins_queries:dict, rels_queries: dict))
-    """
-    logger.info("Start transforming data...")
-    twin_data = data[0]
-    twin_types = twin_data.keys()
-    twin_queries = []
-    for twin_type in twin_types:
-        twin_instances = twin_data[twin_type]
-        for twin_instance in twin_instances:
-            query = ModelUtil.create_twin_query(twin_type, twin_instance)
-            twin_queries.append(query)
-
-    rel_data = data[1]
-    rel_types = rel_data.keys()
-    rel_queries = []
-    for rel_type in rel_types:
-        rel_instances = rel_data[rel_type]
-        for rel_instance in rel_instances:
-            rel_queries.append(ModelUtil.create_relationship_query(rel_type, rel_instance))
-    logger.info("...End transforming data")
-    return twin_queries, rel_queries
-
-
 class ADTTwinCacheConnector:
     """
     Connector class to fetch data from ADT and store them into a twin cache
@@ -130,33 +103,6 @@ class ADTTwinCacheConnector:
         logger.debug(f"GetAllData took : {get_data_timing} s")
         logger.info("...End getting data")
         return twins_content, rels_content
-
-    def store_data(self, data: tuple):
-        """
-        Store data into a twin cache
-        :param data: tuple(twins:dict, rels: dict)
-        """
-        logger.debug("Start storing data...")
-        mw = ModelWriter(host=self.twin_cache_host, port=self.twin_cache_port,
-                         name=self.twin_cache_name,
-                         source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
-                         password=self.twin_cache_password)
-        twin_queries = data[0]
-        rel_queries = data[1]
-        store_data_start = time.time()
-        create_twins_start = time.time()
-        for twin_query in twin_queries:
-            mw.graph.query(twin_query, read_only=False)
-
-        create_twins_timing = time.time() - create_twins_start
-        create_rels_start = time.time()
-        for rel_query in rel_queries:
-            mw.graph.query(rel_query, read_only=False)
-        create_rels_timing = time.time() - create_rels_start
-        store_data_timing = time.time() - store_data_start
-        logger.debug(f"Create Twins took : {create_twins_timing} s")
-        logger.debug(f"Create Rels took : {create_rels_timing} s")
-        logger.debug(f"Create all data took : {store_data_timing} s")
 
     def get_adt_to_redis_schemas(self):
         client = DigitalTwinsClient(self.adt_source_url, self.credentials)
@@ -232,7 +178,7 @@ class ADTTwinCacheConnector:
 
         # create twins files
         twins_files_paths = []
-        twins_folder_path = './twins'
+        twins_folder_path = './twins/'
         os.makedirs(os.path.dirname(twins_folder_path), exist_ok=True)
         for twin_type, rows in twin_data.items():
             file_path = f'{twins_folder_path}/{twin_type}.csv'
@@ -257,7 +203,7 @@ class ADTTwinCacheConnector:
 
         # Create rels files
         rels_files_paths = []
-        rels_folder_path = './rels'
+        rels_folder_path = './rels/'
         os.makedirs(os.path.dirname(rels_folder_path), exist_ok=True)
         for rel_type, rows in rel_data.items():
             file_path = f'{rels_folder_path}/{rel_type}.csv'
@@ -287,8 +233,6 @@ class ADTTwinCacheConnector:
                            source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
                            password=self.twin_cache_password)
         mi.bulk_import(twin_file_paths=twins_files_paths, relationship_file_paths=rels_files_paths, enforce_schema=True)
-        # prepared_data = transform_data(source_data)
-        # self.store_data(prepared_data)
 
         run_timing = time.time() - run_start
         logger.info(f"Run took : {run_timing} s")
