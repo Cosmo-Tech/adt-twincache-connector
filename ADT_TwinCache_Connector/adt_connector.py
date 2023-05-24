@@ -74,7 +74,7 @@ class ADTTwinCacheConnector:
 
     def __init__(self, twin_cache_host: str, twin_cache_port: int,
                  twin_cache_name: str, twin_cache_password: str = None, adt_source_url: str = "",
-                 twin_cache_rotation: int = 1):
+                 twin_cache_rotation: int = 3):
         self.credentials = DefaultAzureCredential()
         self.adt_source_url = adt_source_url
         self.twin_cache_host = twin_cache_host
