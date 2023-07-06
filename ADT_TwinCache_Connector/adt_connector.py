@@ -8,7 +8,7 @@ import json
 
 from CosmoTech_Acceleration_Library.Modelops.core.io.model_writer import ModelWriter
 from CosmoTech_Acceleration_Library.Modelops.core.io.model_importer import ModelImporter
-from CosmoTech_Acceleration_Library.Modelops.core.utils.model_util import ModelUtil
+from CosmoTech_Acceleration_Library.Modelops.core.common.writer.CsvWriter import CsvWriter
 from azure.digitaltwins.core import DigitalTwinsClient
 from azure.identity import DefaultAzureCredential
 
@@ -198,12 +198,7 @@ class ADTTwinCacheConnector:
 
                 csv_w = csv.DictWriter(f, fieldnames=fieldnames)
                 for row in rows:
-                    for k, v in row.items():
-                        print(v)
-                        if isinstance(v, dict):
-                            row[k] = json.dumps(v)
-
-                    csv_w.writerow(row)
+                    csv_w.writerow({k: CsvWriter._to_csv_format(v) for k, v in row.items()})
             twins_files_paths.append(file_path)
 
         # Create rels files
@@ -229,8 +224,8 @@ class ADTTwinCacheConnector:
                 csv_w.writeheader()
 
                 csv_w = csv.DictWriter(f, fieldnames=fieldnames)
-                for r in rows:
-                    csv_w.writerow(ModelUtil.unjsonify(r))
+                for row in rows:
+                    csv_w.writerow({k: CsvWriter._to_csv_format(v) for k, v in row.items()})
             rels_files_paths.append(file_path)
 
         mi = ModelImporter(host=self.twin_cache_host, port=self.twin_cache_port,
