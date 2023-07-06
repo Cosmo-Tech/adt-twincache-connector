@@ -197,8 +197,13 @@ class ADTTwinCacheConnector:
                 csv_w.writeheader()
 
                 csv_w = csv.DictWriter(f, fieldnames=fieldnames)
-                for r in rows:
-                    csv_w.writerow(ModelUtil.unjsonify(r))
+                for row in rows:
+                    for k, v in row.items():
+                        print(v)
+                        if isinstance(v, dict):
+                            row[k] = json.dumps(v)
+
+                    csv_w.writerow(row)
             twins_files_paths.append(file_path)
 
         # Create rels files
