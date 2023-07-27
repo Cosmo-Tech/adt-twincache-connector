@@ -74,7 +74,7 @@ class ADTTwinCacheConnector:
 
     def __init__(self, twin_cache_host: str, twin_cache_port: int,
                  twin_cache_name: str, twin_cache_password: str = None, adt_source_url: str = "",
-                 twin_cache_rotation: int = 3):
+                 twin_cache_rotation: int = 3, dataset_id: str = None):
         self.credentials = DefaultAzureCredential()
         self.adt_source_url = adt_source_url
         self.twin_cache_host = twin_cache_host
@@ -82,6 +82,7 @@ class ADTTwinCacheConnector:
         self.twin_cache_name = twin_cache_name
         self.twin_cache_rotation = twin_cache_rotation
         self.twin_cache_password = twin_cache_password
+        self.dataset_id = dataset_id
 
     def get_data(self) -> tuple:
         """
@@ -233,6 +234,12 @@ class ADTTwinCacheConnector:
                            source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
                            password=self.twin_cache_password)
         mi.bulk_import(twin_file_paths=twins_files_paths, relationship_file_paths=rels_files_paths, enforce_schema=True)
+
+        if self.dataset_id:
+            dataset = mi.r.json().get(self.dataset_id)
+            if dataset:
+                dataset['twingraphId'] = mi.graph.name
+                mi.r.json().set(self.dataset_id, '$', dataset)
 
         run_timing = time.time() - run_start
         logger.info(f"Run took : {run_timing} s")
