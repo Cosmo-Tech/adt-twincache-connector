@@ -1,14 +1,12 @@
 # Copyright (c) Cosmo Tech corporation.
 # Licensed under the MIT license.
-import logging
-import time
 import csv
+import logging
 import os
-import json
+import time
 
-from CosmoTech_Acceleration_Library.Modelops.core.io.model_writer import ModelWriter
-from CosmoTech_Acceleration_Library.Modelops.core.io.model_importer import ModelImporter
 from CosmoTech_Acceleration_Library.Modelops.core.common.writer.CsvWriter import CsvWriter
+from CosmoTech_Acceleration_Library.Modelops.core.io.model_importer import ModelImporter
 from azure.digitaltwins.core import DigitalTwinsClient
 from azure.identity import DefaultAzureCredential
 
@@ -238,7 +236,7 @@ class ADTTwinCacheConnector:
         if self.dataset_id:
             dataset = mi.r.json().get(self.dataset_id)
             if dataset:
-                dataset['twingraphId'] = mi.graph.name
+                dataset['twingraphId'] = self.twin_cache_name
                 mi.r.json().set(self.dataset_id, '$', dataset)
 
         run_timing = time.time() - run_start
