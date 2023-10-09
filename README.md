@@ -77,7 +77,6 @@ Here is the list of environment variables:
 - **TWIN_CACHE_HOST**: the twin cache host
 - **TWIN_CACHE_PORT**: the twin cache port
 - **TWIN_CACHE_NAME**: the twin cache key name where data will be stored
-- **TWIN_CACHE_ROTATION**: defined the data rotation (a.k.a. the amount of keys to keep until data is overwritten) (default 1)
 - **TWIN_CACHE_PASSWORD**: default account/user password (default None)
 
 ## Log level
@@ -121,8 +120,7 @@ Then run:
 
 **N.B:**
 
-- Default log level is set to 'info'
-- Default graph rotation is set to 1
+- Default log level is set to 'INFO'
 
 ## Tasks :
 
