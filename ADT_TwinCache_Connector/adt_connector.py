@@ -73,14 +73,12 @@ class ADTTwinCacheConnector:
     """
 
     def __init__(self, twin_cache_host: str, twin_cache_port: int,
-                 twin_cache_name: str, twin_cache_password: str = None, adt_source_url: str = "",
-                 twin_cache_rotation: int = 3):
+                 twin_cache_name: str, twin_cache_password: str = None, adt_source_url: str = ""):
         self.credentials = DefaultAzureCredential()
         self.adt_source_url = adt_source_url
         self.twin_cache_host = twin_cache_host
         self.twin_cache_port = twin_cache_port
         self.twin_cache_name = twin_cache_name
-        self.twin_cache_rotation = twin_cache_rotation
         self.twin_cache_password = twin_cache_password
 
     def get_data(self) -> tuple:
@@ -230,7 +228,6 @@ class ADTTwinCacheConnector:
 
         mi = ModelImporter(host=self.twin_cache_host, port=self.twin_cache_port,
                            name=self.twin_cache_name,
-                           source_url=self.adt_source_url, graph_rotation=self.twin_cache_rotation,
                            password=self.twin_cache_password)
         mi.bulk_import(twin_file_paths=twins_files_paths, relationship_file_paths=rels_files_paths, enforce_schema=True)
 
